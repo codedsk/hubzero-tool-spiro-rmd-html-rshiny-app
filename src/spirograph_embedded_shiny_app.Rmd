@@ -16,10 +16,15 @@ $$z(t) = \sum_{k=1}^n a_k e^{i2\pi(n_kt+\theta_k)}$$
 This program solves those equations for three wheels, assuming all of the a and theta coefficients are 0. Find more details online at <http://linuxgazette.net/133/luana.html>.
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 # example at http://rmarkdown.rstudio.com/authoring_embedded_shiny.html
 
+# use message=FALSE to turn off messages from loading packages
+# that would normally show up in the console
+
 library(shiny)
+library(ggplot2)
+library(plotly)
 
 spiro <- function(n1,n2,n3) {
   t <- seq(0,1,length.out=1000)
@@ -31,22 +36,36 @@ spiro <- function(n1,n2,n3) {
 # embedding a shiny app into the markdown
 # this is rendered with scrollbars attached
 # a little different from just using the HTML widgets
+# users can control layout of widgets using fluidPage
 
 shinyApp(
 
-    ui = fluidPage (
-      sliderInput(inputId="n1",label="n1",value=13,min=-10,max=20,step=1),
-      sliderInput(inputId="n2",label="n2",value=-7,min=-10,max=20,step=1),
-      sliderInput(inputId="n3",label="n3",value=-3,min=-10,max=20,step=1),
-      plotOutput("spirograph")
+    ui <- fluidPage(
+
+      sidebarLayout(
+
+        sidebarPanel(
+          # input sliders
+          sliderInput(inputId="n1",label="n1",value=13,min=-10,max=20,step=1),
+          sliderInput(inputId="n2",label="n2",value=-7,min=-10,max=20,step=1),
+          sliderInput(inputId="n3",label="n3",value=-3,min=-10,max=20,step=1)
+        ),
+
+        mainPanel(
+          # output plot
+          plotlyOutput("spirograph")
+        )
+      )
     ),
 
-    server = function(input,output) {
-      output$spirograph <- renderPlot({
+    server <- function(input, output) {
+      output$spirograph <- renderPlotly({
         result <- spiro(input$n1,input$n2,input$n3)
-        plot(result,type="l")
+        ggplot(data=result,aes(x=x,y=y)) +
+            geom_path() +
+            xlab("Real(z)") +
+            ylab("Imag(z)")
       })
-
     }
 )
 
